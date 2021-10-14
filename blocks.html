@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Covid-19 Blocks</title>
+    <link rel="shortcut icon" type="image/x-icon" href="fav.ico">
+    <style type="text/css">
+
+        body {
+            margin: 0;
+        }
+
+        canvas {
+            display: block;
+        }
+
+        #mynetwork {
+            width: 100%;
+            height: 100%;
+        }
+
+        #db {
+            width: 250px;
+            position: fixed;
+            margin: 0;
+            bottom: 10px;
+            right: 10px;
+            background-color: rgb(204, 238, 209);
+            border-radius: 10px;
+            padding: 15px;
+            font-size: 15px; 
+            color: rgb(43,167,70);
+            font-family: Helvetica, sans-serif;
+            text-align: center;
+        }
+
+        #update {
+            width: 250px;
+            position: fixed;
+            margin: 0;
+            bottom: 70px;
+            right: 10px;
+            background-color: rgb(224, 237, 255);
+            border-radius: 10px;
+            padding: 15px;
+            font-size: 15px; 
+            color: rgb(57,57,174);
+            font-family: Helvetica, sans-serif;
+            text-align: center;
+        }
+
+        #instructions {
+            width: 350px;
+            position: fixed;
+            margin: 0;
+            bottom: 10px;
+            left: 10px;
+            background-color: rgb(240,240,240);
+            border-radius: 10px;
+            padding: 15px;
+            font-size: 15px; 
+            color: rgb(109,118,125);
+            font-family: Helvetica, sans-serif;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+            
+            right: 0;
+            width: 70%;
+            position: absolute;
+        }
+
+        #keybar2 {
+            padding-top: 60px;
+        }
+
+        #keybar3 {
+            padding-top: 120px;
+        }
+
+        ul li p {
+            float:right;
+            border-radius: 10px;
+            padding: 15px;
+            font-size: 15px; 
+            margin-right: 10px;
+            font-family: Helvetica, sans-serif;
+        }
+
+        #key {
+            background-color: white;
+            color: rgb(109,118,125);
+        }
+
+        #dead {
+            background-color: rgb(240,240,240);
+            color: rgb(109,118,125);
+        }
+
+        #fine {
+            background-color: rgb(179, 255, 179);
+            color: rgb(51, 204, 51);
+        }
+
+        #case {
+            background-color: rgb(255, 179, 179);
+            color: rgb(255, 51, 0);
+        }
+
+        #scale {
+            background-color: rgb(224, 237, 255);
+            color: rgb(57,57,174);
+        }
+
+        #title {
+            position: fixed;
+            margin: 0;
+            top: 10px;
+            left: 15px;
+            background-color: white;
+            border-radius: 10px;
+            padding: 15px;
+            font-size: 20px; 
+            color: rgb(109,118,125);
+            font-family: Helvetica, sans-serif;
+        }
+
+        #data, #location {
+            background-color: rgb(240,240,240);
+            color: rgb(109,118,125);
+        }
+
+        #subtitle {
+            width: 300px;
+            position: fixed;
+            margin: 0;
+            top: 75px;
+            left: 15px;
+            background-color: rgb(240,240,240);
+            border-radius: 10px;
+            padding: 15px;
+            font-size: 15px; 
+            color: rgb(109,118,125);
+            font-family: Helvetica, sans-serif;
+        }
+    
+    </style>
+
+</head>
+
+<body>
+
+    <a href="cluster.html">
+        <p id="subtitle">Go to COVID-19 Interactive Clusters</p>
+    </a>
+    <p id="title">COVID-19 India - 3D Blocks</p>
+
+
+    <ul id="keybar3">
+        <li><p id="data">Data</p></li>
+        <li><p id="location">Location</p></li>
+        <li><p id="key">Selected Block</p></li>
+    </ul>
+
+
+    <ul id="keybar2">
+        <a onclick = "setLinear()">
+            <li><p id="scale">Linear</p></li>
+        </a>
+        <a onclick = "setLog()">
+            <li><p id="scale">Logarithmic</p></li>
+        </a>
+        <li><p id="key">Select Map Scale</p></li>
+    </ul>
+
+    <ul id="keybar1">
+        <a onclick = "setKey(6)">
+            <li><p id="dead">Deceased</p></li>
+        </a>
+        <a onclick = "setKey(5)">
+            <li><p id="fine">Recovered</p></li>
+        </a>
+        <a onclick = "setKey(4)">
+            <li><p id="case">Confirmed Cases</p></li>
+        </a>
+        <li><p id="key">Select Metric</p></li>
+    </ul>
+
+    
+
+    <p id="update">Updated every 10 minutes</p>
+    <a href="https://api.covid19india.org/state_district_wise.json" target="_blank">
+        <p id="db">Crowdsourced Data API</p>
+    </a>
+
+    <p id="instructions">
+        3D map of COVID-19 Cases in India. <br>
+        For different maps, click the buttons in the top <br>
+        right hand corner. <br>
+        Zoom in, out and rotate the map.
+        </p>
+    </a>
+
+    <script src="three.js"></script>
+    <script src="three.min.js"></script>
+    <script src="OrbitControls.js"></script>
+
+    <!--<script src="https://maps.googleapis.com/maps/api/js?key=API_KEY_HIDDEN" 
+    type="text/javascript"></script>-->
+
+    <script>
+
+        var scene = new THREE.Scene();
+
+        let titles = [" Cases", " Recovered", " Deceased"];
+        let fov = 75;
+        let aspect = window.innerWidth / window.innerHeight;
+        let nearPlane = 0.1;
+        let farPlane = 1000;
+
+        let key = 4;
+
+        var csvData;
+
+        var camera = new THREE.PerspectiveCamera(fov, aspect, nearPlane, farPlane);
+        
+        camera.position.x = 0;
+        camera.position.y = -75;
+        camera.position.z = 100;
+        camera.rotation.x = 0.6;
+
+        var renderer = new THREE.WebGLRenderer({antialias: true});
+        renderer.setClearColor("#FFFFFF");
+        renderer.setSize(window.innerWidth, window.innerHeight);
+
+        
+        // Bumps up mesh clarity
+        renderer.setPixelRatio(window.devicePixelRatio);
+
+        document.body.appendChild(renderer.domElement);
+
+        var raycaster = new THREE.Raycaster();
+        var mouse = new THREE.Vector2();
+
+        function onMouseMove(event) {
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
+
+            var intersects = raycaster.intersectObjects(scene.children);
+            if (intersects.length > 0) {
+                for (i=0; i < csvData.length; i++) {
+                    var location;
+                    if (csvData[i][1].indexOf("Other") != -1) location = "Unknown District" + ", " + csvData[i][0];
+                    else location = "Close to " + csvData[i][1] + ", " + csvData[i][0];
+                    var arr = intersects[0].object.name.split(",");
+                    var cases = heightMap[parseInt(arr[0])][parseInt(arr[1])];
+                    var corrected = correctCoords(csvData[i][2], csvData[i][3]);
+                    var corr = corrected[0] + "," + corrected[1];
+                    if (corr == intersects[0].object.name) {
+                        document.getElementById("location").innerHTML = location;
+                        document.getElementById("data").innerHTML = cases + titles[key-4];
+                        break;
+                    }
+                }
+            }
+        }
+
+        window.addEventListener('resize', () => {
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            aspect = window.innerWidth / window.innerHeight;
+            camera.aspect = aspect;
+
+            camera.updateProjectionMatrix();
+        });
+
+
+        function removeAllMesh() {
+            for (i=0; i<scene.children.length; i++) {
+                if (scene.children[i].type == "Mesh") {
+                    scene.remove(scene.children[i])
+                    i--;
+                }
+            }
+        }
+
+
+        var linear = true;
+
+        let res = 2;
+        let minLat = 8 * res;
+        let minLng = 69 * res;
+        
+        function correctCoords(lat, lng) {
+            let newLat = Math.round((parseInt(lat) * res) - minLat);
+            let newLng = Math.round((parseInt(lng) * res) - minLng);
+            return [newLat, newLng];
+        }
+
+        var heightMap = [];
+
+        function generateHeightMap(data, key) {
+
+            heightMap = [];
+
+            var size = 28 * res;
+
+            for (i=0; i<size; i++) {
+                heightMap.push([]);
+                for (j=0; j<size; j++) {
+                    heightMap[i].push(0);
+                }
+            }
+
+            for (i=1; i<data.length; i++) {
+                var cases = parseInt(data[i][key]);
+                var corrected = correctCoords(data[i][2], data[i][3]);
+                var corrLat = corrected[0];
+                var corrLng = corrected[1];
+                // console.log(corrLat + " " + corrLng);
+                heightMap[corrLat][corrLng] += cases + 2;
+            }
+
+        }
+
+        /*
+        function printMap() {
+            for (i=0; i<heightMap.length; i++) {
+                var mapR = ""
+                for (j=0; j<heightMap[i].length; j++) {
+                    
+                    if (heightMap[i][j] == 0) mapR += " . ";
+                    else mapR += " 0 ";
+                }
+                console.log(mapR);
+            }
+        }
+        */
+
+        
+        let dimension = 28 * res;
+        let offset = dimension/2;
+        let scale = (2)
+        let spacing = 0.8;
+        let verticalLogScale = 1;
+        let verticalLinearScale = 0.00005;
+
+        function sigmoid(t) {
+            return 1/(1+Math.pow(Math.E, -t));
+        }
+
+        function setLinear() {
+            linear = true;
+            generateGrid(key);
+        }
+
+        function setLog() {
+            linear = false;
+            generateGrid(key);
+        }
+
+        function setKey(newKey) {
+            key = newKey;
+            generateGrid(key);
+        }
+
+        function decideColor(i, j, data) {
+            let height = (Math.log10(heightMap[i][j])) * verticalLogScale;
+            if (data == 4) {
+                if (height < 3) return new THREE.Color(0xFF9802);
+                else if (height < 5) return new THREE.Color(0xF46036);
+                else return new THREE.Color(0xBB1B2B);
+            } else if (data == 5) {
+                if (height < 3) return new THREE.Color(0x88CC42);
+                else if (height < 5) return new THREE.Color(0x449902);
+                else return new THREE.Color(0x22441D);
+            } else {
+                if (height < 3) return new THREE.Color(0xCCCCCC);
+                else if (height < 5) return new THREE.Color(0x888888);
+                else return new THREE.Color(0x444444);
+            }
+            
+        }
+
+        // data = 4 for confirmed
+        // data = 5 for recovered
+        // data = 6 for deceased
+
+        function generateGrid(data) {
+
+            removeAllMesh();
+
+            generateHeightMap(csvData, data)
+
+            for (i=0; i<dimension; i++) {
+                for (j=0; j<dimension; j++) {
+
+                    if (heightMap[i][j] != 0) {
+
+                        var color = decideColor(i, j, data);
+                        let height;
+
+                        if (!linear) height = (Math.log10(heightMap[i][j])) * verticalLogScale;
+                        else height = (heightMap[i][j]) * verticalLinearScale;
+                        
+                        var box = new THREE.Mesh(new THREE.BoxGeometry(scale, scale, height), new THREE.MeshLambertMaterial({color: color}));
+                        box.position.y = (i - offset) * (scale * spacing);
+                        box.position.x = (j - offset) * (scale * spacing);
+                        box.position.z = height/2;
+                        box.name = i + "," + j
+
+                        scene.add(box);
+
+                    }  /* else {
+                        var color = "grey";
+
+                        let height = baseheight;
+                        var box = new THREE.Mesh(new THREE.BoxGeometry(scale, scale, height), new THREE.MeshLambertMaterial({color: color}));
+                        box.position.y = (i - offset) * (scale * spacing);
+                        box.position.x = (j - offset) * (scale * spacing);
+                        box.position.z = height/2;
+
+                        grid.add(box);
+                    } */
+                }    
+            }
+
+
+        }
+        
+        
+        
+        let light1 = new THREE.PointLight(0xffffff, 0.25);
+        light1.position.set(75,-75, 75);
+        scene.add(light1);
+
+        let light2 = new THREE.PointLight(0xffffff, 0.25);
+        light2.position.set(-75, -75, 75);
+        scene.add(light2);
+
+        let light3 = new THREE.PointLight(0xffffff, 0.25);
+        light3.position.set(75, 75, 75);
+        scene.add(light3);
+
+        let light4 = new THREE.PointLight(0xffffff, 0.25);
+        light4.position.set(-75, 75, 75);
+        scene.add(light4);
+        
+        let light5 = new THREE.PointLight(0xffffff, 0.25);
+        light5.position.set(0, 0, 75);
+        scene.add(light5);
+
+        let light6 = new THREE.AmbientLight(0xffffff, 0.25);
+        scene.add(light6);
+
+        var controls = new THREE.OrbitControls(camera, renderer.domElement);
+
+        controls.maxDistance = 400;
+
+
+        function render() {
+
+            raycaster.setFromCamera(mouse, camera);
+
+            
+            renderer.render(scene, camera);
+            requestAnimationFrame(render);
+        }
+
+        window.addEventListener('mousemove', onMouseMove, false);
+
+        // Geocoding
+        // var geocoder = new google.maps.Geocoder();
+
+        // Get coords
+        async function getLatLng(address) {
+
+            return new Promise(function(resolve, reject) {
+                geocoder.geocode({'address': address}, function(results, status) {
+                    if (status === 'OK') {
+                        resolve([results[0].geometry.location.lat(), results[0].geometry.location.lng()]);
+                    } else {
+                        reject(new Error("Err @ " + status));
+                    }
+                });
+            })
+
+        } 
+
+        // Read off CSV 
+        async function getData(filepath) {
+            
+            var response = await fetch(filepath);
+            var text = await response.text();
+
+            var rows = text.split("\n");
+            for (let row = 0; row<rows.length; row++) {
+                rows[row] = rows[row].split(",");
+            }
+
+            return rows;
+        }
+
+
+        // Write to CSV
+        function downloadCSVFile(data, name) {
+
+            let csvContent = "data:text/csv;charset=utf-8," + data.map(row => row.join(",")).join("\n");
+            var encoded = encodeURI(csvContent);
+            var link = document.createElement("a");
+            link.setAttribute("href", encoded);
+            link.setAttribute("download", name);
+            document.body.appendChild(link);
+            
+            link.click(); 
+            document.body.removeChild(link);
+
+        }
+
+        var coordinates = [];
+        var interval;
+        var row = 1;
+        
+
+        function inscribeCoords(rows) {
+            
+            var currentAddress = coordinates[row-1][0];
+            getLatLng(currentAddress).then((coords) => {
+                coordinates[row-1].push(coords[0]);
+                coordinates[row-1].push(coords[1]);
+                row++;
+                if (row == rows.length) clearInterval(interval);
+            }).catch((error) => console.log(error));
+
+        }
+
+        /*
+        Run Geocode Functions
+        getData("test.csv").then((rows) => {
+
+            for (let i=763; i<rows.length; i++) {
+                var currentRow = rows[i];
+                var currentAddress = currentRow[1] + ", " + currentRow[0];
+                coordinates.push([currentAddress, currentRow[2]]);
+            }
+            
+            interval = setInterval(function() {
+                inscribeCoords(rows);
+            }, 2000);
+
+            // downloadCSVFile(rows, "downloaded.csv");
+
+        });
+        */
+
+        var apiData;
+
+        async function modifyCSVData() {
+
+            var apiRaw = await fetch("./data/state_district_wise.json");
+            // var apiRaw = await fetch("https://data.covid19india.org/state_district_wise.json");
+            apiData = await apiRaw.json();
+
+            for (let i=1; i<csvData.length; i++) {
+                var arr = csvData[i];
+                var state = arr[0];
+                var district = arr[1];
+
+                if (apiData[state]["districtData"][district] !== undefined) {
+                    var confirmed = apiData[state]["districtData"][district].confirmed;
+                    var recovered = apiData[state]["districtData"][district].recovered;
+                    var deceased = apiData[state]["districtData"][district].deceased;
+
+                    if (confirmed !== undefined) csvData[i][4] = confirmed;
+                    if (recovered !== undefined) csvData[i][5] = recovered;
+                    if (deceased !== undefined) csvData[i][6] = deceased;
+                }
+
+            }
+
+            generateGrid(key);
+            render();
+        }
+
+        getData("./data/coords.csv").then((data) => {
+            csvData = data;
+            modifyCSVData();
+        });
+
+    </script>
+
+</body>
+
+</html>

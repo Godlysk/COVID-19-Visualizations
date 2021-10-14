@@ -1,0 +1,552 @@
+<html>
+<head>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.16.1/vis.css" type="text/css" />
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.16.1/vis-network.min.js"> </script>
+    <title>Covid-19 Clusters</title>
+    <link rel="shortcut icon" type="image/x-icon" href="fav.ico">
+
+    <style type="text/css">
+
+        #mynetwork {
+            width: 100%;
+            height: 100%;
+        }
+
+        #db {
+            width: 250px;
+            position: fixed;
+            margin: 0;
+            bottom: 10px;
+            right: 10px;
+            background-color: rgb(204, 238, 209);
+            border-radius: 10px;
+            padding: 15px;
+            font-size: 15px; 
+            color: rgb(43,167,70);
+            font-family: Helvetica, sans-serif;
+            text-align: center;
+        }
+
+        #update {
+            width: 250px;
+            position: fixed;
+            margin: 0;
+            bottom: 70px;
+            right: 10px;
+            background-color: rgb(224, 237, 255);
+            border-radius: 10px;
+            padding: 15px;
+            font-size: 15px; 
+            color: rgb(57,57,174);
+            font-family: Helvetica, sans-serif;
+            text-align: center;
+        }
+
+        #instructions {
+            width: 350px;
+            position: fixed;
+            margin: 0;
+            bottom: 10px;
+            left: 10px;
+            background-color: rgb(240,240,240);
+            border-radius: 10px;
+            padding: 15px;
+            font-size: 15px; 
+            color: rgb(109,118,125);
+            font-family: Helvetica, sans-serif;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+            top: 0;
+            right: 0;
+            width: 70%;
+            position: fixed;
+        }
+
+        ul li p {
+            float:right;
+            border-radius: 10px;
+            padding: 15px;
+            font-size: 15px; 
+            margin-right: 10px;
+            font-family: Helvetica, sans-serif;
+        }
+
+        ul li input {
+            float:right;
+            border-radius: 10px;
+            padding: 15px;
+            font-size: 15px; 
+            margin-right: 10px;
+            margin-top: 15px;
+            font-family: Helvetica, sans-serif;
+            width: 75px;
+            border: none;
+            background-color: rgb(240,240,240);
+            color: rgb(109,118,125);
+        }
+
+        input:focus {
+            outline: none;
+        }
+
+        #key {
+            background-color: white;
+            color: rgb(109,118,125);
+        }
+
+        #hos {
+            background-color: rgb(255, 224, 179);
+            color: rgb(255, 153, 0);
+        }
+
+        #rec {
+            background-color: rgb(179, 255, 179);
+            color: rgb(51, 204, 51);
+        }
+
+        #ded {
+            background-color: rgb(255, 179, 179);
+            color: rgb(255, 51, 0);
+        }
+
+        #eve {
+            background-color: rgb(224, 237, 255);
+            color: rgb(57,57,174);
+        }
+
+        #year {
+            background-color: rgb(240,240,240);
+            color: rgb(109,118,125);
+        }
+
+        #title {
+            position: fixed;
+            margin: 0;
+            top: 10px;
+            left: 15px;
+            background-color: white;
+            border-radius: 10px;
+            padding: 15px;
+            font-size: 20px; 
+            color: rgb(109,118,125);
+            font-family: Helvetica, sans-serif;
+        }
+
+        #keybar2 {
+            padding-top: 60px;
+        }
+
+        #keybar3 {
+            padding-top: 120px;
+        }
+
+        #subtitle {
+            width: 250px;
+            position: fixed;
+            margin: 0;
+            top: 75px;
+            left: 15px;
+            background-color: rgb(240,240,240);
+            border-radius: 10px;
+            padding: 15px;
+            font-size: 15px; 
+            color: rgb(109,118,125);
+            font-family: Helvetica, sans-serif;
+        }
+
+        #status {
+            height: 20px;
+            position: fixed;
+            margin: auto;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            font-size: 20px; 
+            color: rgb(109,118,125);
+            font-family: Helvetica, sans-serif;
+            text-align: center;
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+<div id = "mynetwork"></div>
+
+<a href="blocks.html">
+    <p id="subtitle">Go to COVID-19 3D Map</p>
+</a>
+
+
+
+<p id="title">COVID-19 India - Interactive Clusters</p>
+
+<!--Header-->
+
+<ul id="keybar3">
+    <a onclick = "setStatic(true)">
+        <li><p id="eve">Immediate</p></li>
+    </a>
+    <a onclick = "setStatic(false)">
+        <li><p id="eve">Interactive</p></li>
+    </a>
+    <li><p id="key">Stabilization</p></li>
+</ul>
+
+<ul id="keybar2">
+    <a onclick = "createNodesAndEdges(getGivenDate())">
+        <li><p id="eve">Generate Cluster</p></li>
+    </a>
+    <li><p id="year">2020&nbsp;&nbsp;</p></li>
+    <li><input id="month" placeholder="MM" type="number" min="1" max="12"></li>
+    <li><input id="day" placeholder="DD" type="number" min="1" max="31"></li>
+    <li><p id="key">Select a Date</p></li>
+</ul>
+
+<ul id="keybar">
+    <li><p id="eve">Public Event</p></li>
+    <li><p id="ded">Deceased</p></li>
+    <li><p id="hos">Hospitalized</p></li>
+    <li><p id="rec">Recovered</p></li>
+    <li><p id="key">Color Key</p></li>
+</ul>
+
+
+<p id="status">Loading...</p>
+
+<!--Footer-->
+
+<p id="update">Data till 31/12/2020</p>
+<a href="https://api.covid19india.org/raw_data4.json" target="_blank">
+    <p id="db">Crowdsourced Data API</p>
+</a>
+
+<p id="instructions">
+    Each node represents a patient.  <br>
+    Arrows represent COVID-19 transfer. <br>
+    Visualization may take a few minutes to load.
+</a>
+
+<script>
+
+var edges;
+var nodes;
+var network; 
+var container;
+var options, data;
+var static = true;
+
+var monthDays = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+
+function getGivenDate() {
+
+    var dd = document.getElementById("day").value;
+    var mm = document.getElementById("month").value;
+    var yyyy = "2020";
+
+
+    // Validation Statements
+    if (dd == "" || mm == "" || parseInt(dd) < 1 || 1 > parseInt(mm) ||  parseInt(mm) > 12 || parseInt(dd) > monthDays[parseInt(mm)-1]) {
+        return getDateToday();
+    }
+    if (dd.indexOf(".") != -1 || mm.indexOf(".") != -1 || dd.indexOf("-") != -1 || mm.indexOf("-") != -1) {
+        return getDateToday();
+    }
+
+    // Construct Date
+    if (dd.length == 1) dd = "0" + dd
+    if (mm.length == 1) mm = "0" + mm
+    return (dd.slice(0,2) + "/" + mm.slice(0,2) + "/" + yyyy);
+}
+
+function setStatic(state) {
+    if (static != state) {
+        static = state;
+        createNodesAndEdges(getGivenDate());
+    }
+}
+
+// Valid only for 2020
+function getDateToday() {
+    // var today = new Date();
+    // var dd = String(today.getDate()).padStart(2, '0');
+    // var mm = String(today.getMonth() + 1).padStart(2, '0');
+    // var yyyy = today.getFullYear();
+
+    // return (dd + "/" + mm + "/" + yyyy);
+    return "31/12/2020";
+}
+
+/*
+E0,-5,183
+E1,8167,5397
+*/
+
+function initializeNodesEdges() {
+    nodes = new vis.DataSet([
+        {
+            id: "E0", 
+            label: "E0", 
+            shape: "dot", 
+            title: "Religious Gathering in Delhi",
+            x: -5,
+            y: 183,
+            hidden: false
+        },
+        {
+            id: "E1", 
+            label: "E1", 
+            shape: "dot", 
+            title: "Public Gathering",
+            x: 8167,
+            y: 5397,
+            hidden: false
+        }
+    ]);
+
+    edges = new vis.DataSet([]);
+}
+
+
+
+function drawGraph(nodes_list, edges_list) {
+        
+    var container = document.getElementById('mynetwork');
+
+    container.style.display = "block";
+
+    data = {nodes: nodes_list, edges: edges_list};
+
+        var options = {
+            "configure": {
+                "enabled": false
+            },
+            "edges": {
+                "color": {
+                    "inherit": true
+                },
+                "smooth": {
+                    "enabled": false,
+                    "type": "continuous"
+                }
+            },
+            "interaction": {
+                "dragNodes": true,
+                "hideEdgesOnDrag": false,
+                "hideNodesOnDrag": false
+            },
+            "physics": {
+                "barnesHut": {
+                    "avoidOverlap": 0,
+                    "centralGravity": 1,
+                    "damping": 0.09,
+                    "gravitationalConstant": -80000,
+                    "springConstant": 0.01,
+                    "springLength": 250
+                },
+                "enabled": true,
+                "stabilization": {
+                    "enabled": false,
+                    "fit": true,
+                    "iterations": 400,
+                    "onlyDynamicEdges": false,
+                    "updateInterval": 50
+                }
+            }
+        };
+
+        network = new vis.Network(container, data, options);
+
+        return network;
+}
+
+function getColor(number, arr) {
+    var status = arr[number].currentstatus;
+    if (status == "Deceased") return "#ff704d";
+    else if (status == "Recovered") return "#aaff80";
+    else return "#ffb84d";
+}
+
+// Pre-generated node-positions
+var nodePositions;
+var response;
+
+async function createNodesAndEdges(inputDate) {
+
+    initializeNodesEdges();
+
+    var loader = document.getElementById("status");
+    var container = document.getElementById('mynetwork');
+    loader.style.display = "block";
+    loader.innerHTML = "Loading " + inputDate + "...";
+    container.style.display = "none";
+
+    var limDay = parseInt(inputDate.slice(0, 2));
+    var limMonth = parseInt(inputDate.slice(3, 5));
+
+    var data1 = await fetch("./data/raw_data1.json");
+    var data2 = await fetch("./data/raw_data2.json");
+    var data3 = await fetch("./data/raw_data3.json");
+    var data4 = await fetch("./data/raw_data4.json");
+    var data5 = await fetch("./data/raw_data5.json");
+    var data6 = await fetch("./data/raw_data6.json");
+
+    var answer1 = await data1.json();
+    var answer2 = await data2.json();
+    var answer3 = await data3.json();
+    var answer4 = await data4.json();
+    var answer5 = await data5.json();
+    var answer6 = await data6.json();
+
+    nodePositions = await getData("./data/nodepos.csv");
+
+    response = answer1.raw_data.concat(answer2.raw_data, answer3.raw_data, answer4.raw_data, answer5.raw_data, answer6.raw_data);
+
+    for (let i=0; i<response.length; i++) {
+        
+        var patient_number = response[i].patientnumber;
+        var detected_district = response[i].detecteddistrict;
+        var detected_state = response[i].detectedstate;
+        var suspected_from = response[i].contractedfromwhichpatientsuspected;
+        var patient_status = response[i].currentstatus;
+        var date = response[i].dateannounced;
+
+        day = parseInt(date.slice(0, 2));
+        month = parseInt(date.slice(3, 5));
+
+        if ((month > limMonth) || (month == limMonth && day > limDay)) break;
+        
+        if (patient_number != "" && suspected_from != "") {
+
+            var cx = null;
+            var cy = null;
+            
+            if (static) {
+                nodePositions.forEach(row => {
+                    if (row[0] == "P" + patient_number) {
+                        cx = parseInt(row[1]);
+                        cy = parseInt(row[2]);
+                    }
+                });
+            }
+
+            var this_node = {
+                id: "P" + patient_number,
+                label: "P" + patient_number, 
+                shape: "dot", 
+                title: "Patient Number " + patient_number + ": " + detected_district + ", " + detected_state,
+                color: getColor(patient_number, response),
+                x: cx,
+                y: cy,
+                hidden: false
+            }
+            
+            if (nodes.get("P" + patient_number) === null) nodes.add(this_node);
+            
+            var split = suspected_from.split(",");
+            for (let j=0; j<split.length; j++) {
+                var word = split[j].trim();
+                if (word[0] == "P" || word[0] == "E") {
+
+                    if (nodes.get(word) === null) {
+                        
+                        var cx = 0;
+                        var cy = 0;
+                        
+                        if (static) {
+                            nodePositions.forEach(row => {
+                                if (row[0] == "P" + patient_number) {
+                                    cx = parseInt(row[1]);
+                                    cy = parseInt(row[2]);
+                                }
+                            });
+                        }
+                        
+                        neighborIndex = parseInt(word.slice(1));
+                        if (neighborIndex <= response.length) {
+                            var new_node = {
+                                id: word,
+                                label: word, 
+                                shape: "dot", 
+                                title: "Patient Number " + neighborIndex + ": " + response[neighborIndex-1].detecteddistrict + ", " + response[neighborIndex-1].detectedstate,
+                                color: getColor(neighborIndex, response),
+                                x: cx,
+                                y: cy,
+                                hidden: false
+                            }
+                            nodes.add(new_node); 
+                        }
+                    }
+
+                    var new_edge = {
+                        id: word + " to " + "P" + patient_number,
+                        arrows: "to", 
+                        from: word,
+                        title: "COVID-19 transfer on " + date, 
+                        to: "P" + patient_number,
+                        hidden: false
+                    }
+
+                    edges.add(new_edge);
+                }
+                
+            }
+            
+        } 
+
+    }
+
+    drawGraph(nodes, edges);
+
+    loader.style.display = "none";
+}
+
+
+// Too slow for dating the network
+function dateGraph(limDay, limMonth) {
+    
+    nodes.getIds().slice(2).forEach(nodeID => {
+        idx = parseInt(nodeID.slice(1));
+        date = response[idx].dateannounced;
+        day = parseInt(date.slice(0, 2));
+        month = parseInt(date.slice(3, 5));
+        
+        if ((month > limMonth) || (month == limMonth && day > limDay)) {
+            nodes.update([{id: nodeID, hidden: true}]);
+            network.getConnectedEdges(nodeID).forEach(edgeID => {
+                edges.update([{id: edgeID, hidden: true}]);
+            });
+        }
+    });
+
+    //drawGraph(nodes, edges);
+}
+
+
+async function getData(filepath) {   
+    var csv = await fetch(filepath);
+    var text = await csv.text();
+    var rows = text.split("\n");
+    for (let row = 0; row<rows.length; row++) {
+        rows[row] = rows[row].split(",");
+    }
+    return rows;
+}
+
+
+window.onload = createNodesAndEdges("31/12/2020");
+
+
+</script>
+
+</body>
+
+</html>
